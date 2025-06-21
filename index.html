@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vigilant - Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    :root {
+      --accent-dark: #00ffb0;
+      --accent-light: #00bfff;
+      --accent-blue: #00bfff;
+      --accent-purple: #a259ff;
+      --accent-pink: #ff5eae;
+      --accent-cyan: #00fff7;
+      --accent-yellow: #ffe066;
+      --bg-dark: #0a0f0a;
+      --bg-light: #f3f3f3;
+      --card-dark: rgba(10, 20, 10, 0.97);
+      --card-light: #f8fff8;
+      --bubble-dark: #1a2e24;
+      --bubble-light: #e6faff;
+      --botbubble-dark: #23283a;
+      --botbubble-light: #e6faff;
+      --text-dark: #f3f3f3;
+      --text-light: #181c24;
+      --desc-dark: #baffea;
+      --desc-light: #008080;
+    }
+    body, html {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: var(--bg-dark);
+      overflow: hidden;
+      transition: background 0.5s;
+      /* Cyber gradient background */
+      background: linear-gradient(120deg, #0a0f0a 0%, #1a2e24 40%, #23283a 100%);
+    }
+    body.light-mode, html.light-mode {
+      background: var(--bg-light);
+      background: linear-gradient(120deg, #f3f3f3 0%, #e6faff 60%, #baffea 100%);
+    }
+    #particles-js, #math-bg-canvas, #matrix-canvas, .scanlines {
+      transition: filter 0.5s;
+    }
+    body.light-mode #particles-js,
+    body.light-mode #math-bg-canvas,
+    body.light-mode #matrix-canvas {
+      filter: brightness(0.7) grayscale(0.2) hue-rotate(120deg);
+    }
+    body.light-mode #particles-js {
+      filter: brightness(1.1) hue-rotate(160deg);
+    }
+    body.light-mode #math-bg-canvas {
+      filter: brightness(1.1) hue-rotate(160deg);
+    }
+    body.light-mode #matrix-canvas {
+      filter: brightness(1.1) hue-rotate(160deg);
+    }
+    body.light-mode .scanlines {
+      opacity: 0.08;
+    }
+    #particles-js {
+      position: fixed;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      top: 0; left: 0;
+      pointer-events: none;
+    }
+    #math-bg-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.25;
+    }
+    #matrix-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.38;
+      mix-blend-mode: lighten;
+      filter: blur(0.5px) brightness(1.2);
+    }
+    .scanlines {
+      pointer-events: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 3;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(0,255,128,0.07) 0px,
+        rgba(0,255,128,0.07) 1px,
+        transparent 2px,
+        transparent 6px
+      );
+      animation: scanmove 2.5s linear infinite;
+      mix-blend-mode: lighten;
+    }
+    @keyframes scanmove {
+      0% { background-position-y: 0; }
+      100% { background-position-y: 8px; }
+    }
+    .chat-main-container {
+      position: relative;
+      z-index: 4;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .chat-card {
+      background: var(--card-dark);
+      border-radius: 36px;
+      box-shadow: 0 0 120px var(--accent-dark), 0 0 48px #00ffb099, 0 0 0px var(--accent-dark);
+      padding: 0;
+      max-width: 850px;
+      width: 98vw;
+      height: 85vh;
+      min-height: 500px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      margin: 40px auto;
+      animation: cardGlow 1.2s infinite alternate;
+      overflow: hidden;
+      transition: background 0.5s, box-shadow 0.5s;
+    }
+    body.light-mode .chat-card {
+      background: var(--card-light);
+      box-shadow: 0 0 60px var(--accent-light), 0 0 8px #00bfff22;
+    }
+    .chat-header {
+      background: linear-gradient(90deg, #181c24 60%, var(--accent-purple) 100%);
+      padding: 32px 32px 16px 32px;
+      border-radius: 36px 36px 0 0;
+      text-align: left;
+      border-bottom: 1px solid #00ffb055;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chat-header-title {
+      font-family: 'Share Tech Mono', 'Consolas', monospace;
+      font-size: 2em;
+      color: var(--accent-dark);
+      text-shadow: 0 0 24px var(--accent-dark), 0 0 48px var(--accent-dark);
+      margin: 0 0 6px 0;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: color 0.5s, text-shadow 0.5s;
+    }
+    body.light-mode .chat-header-title {
+      color: var(--accent-light);
+      text-shadow: 0 0 24px var(--accent-light), 0 0 48px var(--accent-light);
+    }
+    .theme-toggle {
+      background: none;
+      border: none;
+      font-size: 2em;
+      cursor: pointer;
+      color: var(--accent-dark);
+      filter: drop-shadow(0 0 8px var(--accent-dark));
+      transition: color 0.3s, filter 0.3s;
+    }
+    body.light-mode .theme-toggle {
+      color: var(--accent-light);
+      filter: drop-shadow(0 0 8px var(--accent-light));
+    }
+    .chat-header-desc {
+      color: var(--desc-dark);
+      font-size: 1.1em;
+      margin: 0;
+      text-shadow: 0 0 8px #00ffb055;
+      width: 100%;
+      transition: color 0.5s;
+    }
+    body.light-mode .chat-header-desc {
+      color: var(--desc-light);
+      text-shadow: 0 0 8px #00bfff55;
+    }
+    .chat-history {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: 100%;
+      padding: 24px 24px 0 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      background: transparent;
+      font-size: 1.15em;
+      scroll-behavior: smooth;
+    }
+    .message {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .message.user {
+      flex-direction: row-reverse;
+    }
+    .message .avatar {
+      font-size: 2em;
+      margin-bottom: 2px;
+      filter: drop-shadow(0 0 8px var(--accent-dark));
+      transition: filter 0.5s;
+    }
+    body.light-mode .message .avatar {
+      filter: drop-shadow(0 0 8px var(--accent-light));
+    }
+    .message .bubble {
+      max-width: 70%;
+      padding: 16px 20px;
+      border-radius: 18px;
+      font-size: 1.15em;
+      line-height: 1.6;
+      background: var(--bubble-dark);
+      color: var(--text-dark);
+      box-shadow: 0 2px 16px #00ffb033, 0 0 8px #00ffb022;
+      word-break: break-word;
+      border: 1.5px solid #00ffb055;
+      text-shadow: 0 0 8px #00ffb055;
+      transition: background 0.2s, color 0.2s, border 0.2s;
+      position: relative;
+    }
+    body.light-mode .message .bubble {
+      background: var(--bubble-light);
+      color: var(--text-light);
+      border: 1.5px solid #00bfff55;
+      text-shadow: 0 0 8px #00bfff55;
+    }
+    .message.user .bubble {
+      background: linear-gradient(90deg, var(--accent-cyan) 0%, var(--accent-blue) 100%);
+      color: var(--text-dark);
+      border-bottom-right-radius: 6px;
+      border-bottom-left-radius: 18px;
+      border: 1.5px solid var(--accent-dark);
+      text-shadow: none;
+      transition: background 0.2s, color 0.2s, border 0.2s;
+    }
+    body.light-mode .message.user .bubble {
+      background: linear-gradient(90deg, var(--accent-yellow) 0%, var(--accent-light) 100%);
+      color: var(--text-light);
+      border: 1.5px solid var(--accent-light);
+    }
+    .message.bot .bubble {
+      background: linear-gradient(90deg, var(--botbubble-dark) 60%, var(--accent-purple) 100%);
+      color: var(--desc-dark);
+      border-bottom-left-radius: 6px;
+      border-bottom-right-radius: 18px;
+      border: 1.5px solid #00ffb055;
+      transition: background 0.2s, color 0.2s, border 0.2s;
+    }
+    body.light-mode .message.bot .bubble {
+      background: linear-gradient(90deg, var(--botbubble-light) 60%, var(--accent-pink) 100%);
+      color: var(--desc-light);
+      border: 1.5px solid #00bfff55;
+    }
+    .voice-btn {
+      background: none;
+      border: none;
+      font-size: 1.3em;
+      color: var(--accent-dark);
+      margin-left: 6px;
+      cursor: pointer;
+      filter: drop-shadow(0 0 6px var(--accent-dark));
+      transition: color 0.2s, filter 0.2s;
+      vertical-align: middle;
+    }
+    .voice-btn:active {
+      color: #00b07a;
+    }
+    body.light-mode .voice-btn {
+      color: var(--accent-light);
+      filter: drop-shadow(0 0 6px var(--accent-light));
+    }
+    .input-area {
+      display: flex;
+      padding: 20px 24px 24px 24px;
+      background: rgba(0, 30, 20, 0.13);
+      border-radius: 0 0 36px 36px;
+      border-top: 1px solid #00ffb055;
+      gap: 12px;
+      transition: background 0.5s;
+    }
+    body.light-mode .input-area {
+      background: #e6faff;
+      border-top: 1px solid #00bfff55;
+    }
+    .input-area input {
+      flex: 1;
+      padding: 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1.1em;
+      background: #23283a;
+      color: #f3f3f3;
+      outline: none;
+      margin-right: 10px;
+      box-shadow: 0 0 8px #00ffb055;
+      border: 1.5px solid #00ffb055;
+      transition: border 0.2s, background 0.2s, color 0.2s;
+    }
+    body.light-mode .input-area input {
+      background: #fff;
+      color: #181c24;
+      border: 1.5px solid #00bfff55;
+    }
+    .input-area input:focus {
+      border: 1.5px solid var(--accent-dark);
+      box-shadow: 0 0 16px var(--accent-dark);
+    }
+    body.light-mode .input-area input:focus {
+      border: 1.5px solid var(--accent-light);
+      box-shadow: 0 0 16px var(--accent-light);
+    }
+    .input-area button {
+      background: linear-gradient(90deg, var(--accent-dark) 60%, var(--accent-purple) 100%);
+      color: var(--text-dark);
+      border: none;
+      border-radius: 8px;
+      padding: 16px 32px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+      box-shadow: 0 0 16px var(--accent-dark), 0 0 32px var(--accent-dark);
+      font-family: 'Share Tech Mono', 'Consolas', monospace;
+      letter-spacing: 1px;
+      animation: neonBtn 1.2s infinite alternate;
+    }
+    .input-area button:hover {
+      background: #0a0f0a;
+      color: var(--accent-dark);
+      box-shadow: 0 0 32px var(--accent-dark), 0 0 64px var(--accent-dark);
+      border: 2px solid var(--accent-dark);
+    }
+    body.light-mode .input-area button {
+      background: linear-gradient(90deg, var(--accent-light) 60%, var(--accent-yellow) 100%);
+      color: var(--text-light);
+      box-shadow: 0 0 16px var(--accent-light), 0 0 32px var(--accent-light);
+    }
+    body.light-mode .input-area button:hover {
+      background: #e6faff;
+      color: var(--accent-light);
+      border: 2px solid var(--accent-light);
+    }
+    @keyframes neonBtn {
+      0% { box-shadow: 0 0 16px var(--accent-dark), 0 0 32px var(--accent-dark); }
+      100% { box-shadow: 0 0 32px var(--accent-dark), 0 0 64px var(--accent-dark); }
+    }
+    .loading {
+      text-align: center;
+      color: var(--accent-dark);
+      padding: 8px 0 16px 0;
+      font-size: 1.1em;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      filter: drop-shadow(0 0 8px var(--accent-dark));
+      transition: color 0.5s, filter 0.5s;
+    }
+    body.light-mode .loading {
+      color: var(--accent-light);
+      filter: drop-shadow(0 0 8px var(--accent-light));
+    }
+    .loading .dot {
+      font-weight: bold;
+      font-size: 1.3em;
+      opacity: 0.2;
+      transition: opacity 0.2s;
+    }
+    .error {
+      background: #ff3b3b;
+      color: #fff;
+      text-align: center;
+      padding: 8px 0;
+      border-radius: 0 0 8px 8px;
+      font-size: 1em;
+      margin: 0 16px 10px 16px;
+      box-shadow: 0 2px 8px #0002;
+      letter-spacing: 0.5px;
+      z-index: 2;
+    }
+    @media (max-width: 900px) {
+      .chat-card { max-width: 100vw; min-height: 90vh; }
+      .chat-header { padding: 18px 10px 10px 10px; }
+      .chat-history { padding: 10px 6px 0 6px; }
+      .input-area { padding: 10px 6px 10px 6px; }
+    }
+    /* Bot bubble color classes */
+    .bot-bubble-0 { background: linear-gradient(90deg, var(--botbubble-dark) 60%, var(--accent-purple) 100%) !important; }
+    .bot-bubble-1 { background: linear-gradient(90deg, var(--botbubble-dark) 60%, var(--accent-blue) 100%) !important; }
+    .bot-bubble-2 { background: linear-gradient(90deg, var(--botbubble-dark) 60%, var(--accent-pink) 100%) !important; }
+    .bot-bubble-3 { background: linear-gradient(90deg, var(--botbubble-dark) 60%, var(--accent-yellow) 100%) !important; }
+    .bot-bubble-4 { background: linear-gradient(90deg, var(--botbubble-dark) 60%, var(--accent-cyan) 100%) !important; }
+    .bot-bubble-5 { background: linear-gradient(90deg, var(--botbubble-dark) 60%, var(--accent-dark) 100%) !important; }
+    body.light-mode .bot-bubble-0 { background: linear-gradient(90deg, var(--botbubble-light) 60%, var(--accent-purple) 100%) !important; }
+    body.light-mode .bot-bubble-1 { background: linear-gradient(90deg, var(--botbubble-light) 60%, var(--accent-blue) 100%) !important; }
+    body.light-mode .bot-bubble-2 { background: linear-gradient(90deg, var(--botbubble-light) 60%, var(--accent-pink) 100%) !important; }
+    body.light-mode .bot-bubble-3 { background: linear-gradient(90deg, var(--botbubble-light) 60%, var(--accent-yellow) 100%) !important; }
+    body.light-mode .bot-bubble-4 { background: linear-gradient(90deg, var(--botbubble-light) 60%, var(--accent-cyan) 100%) !important; }
+    body.light-mode .bot-bubble-5 { background: linear-gradient(90deg, var(--botbubble-light) 60%, var(--accent-light) 100%) !important; }
+    body.light-mode .chat-header {
+      background: linear-gradient(90deg, #e6faff 60%, var(--accent-light) 100%);
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="particles-js"></div>
+  <canvas id="math-bg-canvas"></canvas>
+  <canvas id="matrix-canvas"></canvas>
+  <div class="scanlines"></div>
+  <div class="chat-main-container">
+    <div class="chat-card">
+      <div class="chat-header">
+        <div class="chat-header-title"><span style="font-size:1.5em;">&#128274;</span> Vigilant</div>
+        <button class="theme-toggle" id="theme-toggle" title="Toggle theme">🌙</button>
+      </div>
+      <div class="chat-header-desc">Ask about cybercrime, breaches, or cybersecurity attacks.</div>
+      <div id="chat-history" class="chat-history"></div>
+      <div class="input-area">
+        <input id="user-input" type="text" placeholder="Type your message..." autocomplete="off" onkeydown="if(event.key==='Enter'){sendMessage();}">
+        <button onclick="sendMessage()">Send</button>
+      </div>
+      <div id="loading" class="loading" style="display:none;">🤖 <span id="typing">Bot is typing</span><span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></div>
+      <div id="error" class="error" style="display:none;"></div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles@3.1.0/tsparticles.bundle.min.js"></script>
+  <script>
+    // Adapt particles color for theme
+    let currentTheme = 'dark';
+    function loadParticles(theme) {
+      tsParticles.load("particles-js", {
+        fpsLimit: 60,
+        background: { color: theme === 'light' ? "#f3f3f3" : "#0a0f0a" },
+        particles: {
+          number: { value: 180, density: { enable: true, area: 800 } },
+          color: { value: theme === 'light' ? "#00bfff" : "#00ffb0" },
+          shape: { type: "circle" },
+          opacity: { value: 0.22, random: true },
+          size: { value: 2.5, random: { enable: true, minimumValue: 1 } },
+          move: {
+            enable: true,
+            speed: 1.5,
+            direction: "bottom",
+            straight: false,
+            outModes: { default: "out" },
+          },
+          links: { enable: false },
+        },
+        detectRetina: true,
+      });
+    }
+    loadParticles('dark');
+  </script>
+  <!-- Math Symbols Animation -->
+  <script>
+    const mathCanvas = document.getElementById('math-bg-canvas');
+    const mathCtx = mathCanvas.getContext('2d');
+    let mw = window.innerWidth, mh = window.innerHeight;
+    mathCanvas.width = mw; mathCanvas.height = mh;
+    const mathSymbols = ['∑','π','∫','√','∆','∞','α','β','γ','θ','λ','μ','Ω','Σ','Φ','Ψ','∂','∇','≈','≠','≤','≥','±','÷','×','∈','∉','∩','∪','∅','∃','∀','∴','∵','∝','∠','∴','∵','∥','⊥','∧','∨','⊕','⊗','⊥','∅','ℵ','ℜ','ℑ','ℓ','℘','ℵ₀'];
+    let mathAccent = '#00ffb0';
+    function getMathAccent() {
+      return document.body.classList.contains('light-mode') ? '#00bfff' : '#00ffb0';
+    }
+    let mathParticles = Array.from({length: 40}, () => ({
+      x: Math.random() * mw,
+      y: Math.random() * mh,
+      size: 32 + Math.random() * 32,
+      speed: 0.2 + Math.random() * 0.5,
+      symbol: mathSymbols[Math.floor(Math.random() * mathSymbols.length)],
+      alpha: 0.3 + Math.random() * 0.5
+    }));
+    function drawMathSymbols() {
+      mathCtx.clearRect(0, 0, mw, mh);
+      mathParticles.forEach(p => {
+        mathCtx.save();
+        mathCtx.globalAlpha = p.alpha;
+        mathCtx.font = `${p.size}px 'Share Tech Mono', monospace`;
+        mathCtx.fillStyle = getMathAccent();
+        mathCtx.shadowColor = getMathAccent();
+        mathCtx.shadowBlur = 16;
+        mathCtx.fillText(p.symbol, p.x, p.y);
+        mathCtx.restore();
+        p.y += p.speed;
+        if (p.y > mh + 40) {
+          p.y = -40;
+          p.x = Math.random() * mw;
+          p.size = 32 + Math.random() * 32;
+          p.symbol = mathSymbols[Math.floor(Math.random() * mathSymbols.length)];
+          p.alpha = 0.3 + Math.random() * 0.5;
+        }
+      });
+      requestAnimationFrame(drawMathSymbols);
+    }
+    drawMathSymbols();
+    window.addEventListener('resize', () => {
+      mw = window.innerWidth; mh = window.innerHeight;
+      mathCanvas.width = mw; mathCanvas.height = mh;
+    });
+  </script>
+  <!-- Matrix Rain Effect (English only) -->
+  <script>
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    let w = window.innerWidth;
+    let h = window.innerHeight;
+    canvas.width = w;
+    canvas.height = h;
+    let fontSize = 16;
+    let columns = Math.floor(w / fontSize);
+    let drops = Array(columns).fill(1);
+    // English letters, numbers, and symbols only
+    const matrixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?'.split('');
+    function getMatrixAccent() {
+      return document.body.classList.contains('light-mode') ? '#00bfff' : '#00ffb0';
+    }
+    function drawMatrix() {
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = document.body.classList.contains('light-mode') ? 'rgba(230,250,255,0.13)' : 'rgba(10,15,10,0.13)';
+      ctx.fillRect(0, 0, w, h);
+      ctx.font = fontSize + "px 'Share Tech Mono', monospace";
+      for (let i = 0; i < drops.length; i++) {
+        const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+        ctx.fillStyle = getMatrixAccent();
+        ctx.shadowColor = getMatrixAccent();
+        ctx.shadowBlur = 14;
+        ctx.globalAlpha = 0.7;
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1.0;
+        if (drops[i] * fontSize > h && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    }
+    setInterval(drawMatrix, 40);
+    window.addEventListener('resize', () => {
+      w = window.innerWidth;
+      h = window.innerHeight;
+      canvas.width = w;
+      canvas.height = h;
+      columns = Math.floor(w / fontSize);
+      drops = Array(columns).fill(1);
+    });
+  </script>
+  <script>
+    const chatHistory = document.getElementById('chat-history');
+    const loading = document.getElementById('loading');
+    const errorDiv = document.getElementById('error');
+    let typingInterval;
+
+    // Theme toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    themeToggle.onclick = function() {
+      document.body.classList.toggle('light-mode');
+      document.documentElement.classList.toggle('light-mode');
+      const isLight = document.body.classList.contains('light-mode');
+      themeToggle.textContent = isLight ? '🌑' : '🌙';
+      loadParticles(isLight ? 'light' : 'dark');
+    };
+
+    // Typewriter effect for bot messages
+    function typewriterEffect(element, text, callback) {
+      let i = 0;
+      element.innerHTML = '';
+      function type() {
+        if (i < text.length) {
+          element.innerHTML += text[i] === '\n' ? '<br>' : text[i];
+          i++;
+          setTimeout(type, 16 + Math.random() * 30);
+        } else if (callback) {
+          callback();
+        }
+      }
+      type();
+    }
+
+    // Voice output for bot messages
+    function speak(text) {
+      if ('speechSynthesis' in window) {
+        const utter = new SpeechSynthesisUtterance(text.replace(/<br>/g, ' '));
+        utter.rate = 1.05;
+        utter.pitch = 1.1;
+        utter.volume = 1;
+        utter.lang = 'en-US';
+        window.speechSynthesis.speak(utter);
+      }
+    }
+
+    // Bot bubble color alternation
+    const botBubbleColors = [0,1,2,3,4,5];
+    let botMsgCount = 0;
+    function appendMessage(sender, text) {
+      const msg = document.createElement('div');
+      msg.className = 'message ' + sender;
+      const bubble = document.createElement('span');
+      bubble.className = 'bubble';
+      if (sender === 'bot') {
+        // Typewriter effect for bot
+        typewriterEffect(bubble, text, null);
+        // Add voice button
+        const voiceBtn = document.createElement('button');
+        voiceBtn.className = 'voice-btn';
+        voiceBtn.title = 'Read aloud';
+        voiceBtn.innerHTML = '🔊';
+        voiceBtn.onclick = () => speak(text);
+        msg.appendChild(document.createElement('span')).className = 'avatar';
+        msg.lastChild.textContent = '🤖';
+        // Alternate bot bubble color
+        const colorIdx = botBubbleColors[botMsgCount % botBubbleColors.length];
+        bubble.classList.add('bot-bubble-' + colorIdx);
+        botMsgCount++;
+        msg.appendChild(bubble);
+        msg.appendChild(voiceBtn);
+      } else {
+        msg.appendChild(document.createElement('span')).className = 'avatar';
+        msg.lastChild.textContent = '🧑';
+        msg.appendChild(bubble);
+        bubble.innerHTML = text.replace(/\n/g,'<br>');
+      }
+      chatHistory.appendChild(msg);
+      // Auto-scroll to bottom
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+      msg.scrollIntoView({behavior: 'smooth', block: 'end'});
+    }
+
+    function showError(message) {
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+      setTimeout(() => { errorDiv.style.display = 'none'; }, 4000);
+    }
+
+    function showTypingAnimation() {
+      loading.style.display = 'block';
+      let dots = 0;
+      typingInterval = setInterval(() => {
+        const dotEls = loading.querySelectorAll('.dot');
+        dotEls.forEach((el, i) => el.style.opacity = (i < dots % 4) ? '1' : '0.2');
+        dots++;
+      }, 400);
+    }
+    function hideTypingAnimation() {
+      loading.style.display = 'none';
+      clearInterval(typingInterval);
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('user-input');
+      const message = input.value.trim();
+      if (!message) return;
+      appendMessage('user', message);
+      input.value = '';
+      showTypingAnimation();
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({message})
+        });
+        if (!res.ok) throw new Error('Server error');
+        const data = await res.json();
+        appendMessage('bot', data.response);
+      } catch (e) {
+        showError('Error: Could not reach the server or API failed.');
+        appendMessage('bot', 'Sorry, something went wrong. Please try again later.');
+      } finally {
+        hideTypingAnimation();
+      }
+    }
+
+    // Welcome message on load (typewriter)
+    window.onload = function() {
+      appendMessage('bot', '👋 Welcome! I am your cybercrime intelligence assistant. How can I help you today?');
+    };
+  </script>
+</body>
+</html> 
