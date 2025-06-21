@@ -1,0 +1,1 @@
+print('The terminal chatbot has been upgraded! Please run app.py to use the new web version in your browser.') 
